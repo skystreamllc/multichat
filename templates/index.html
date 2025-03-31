@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multilingual Chat</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #chat-box { height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+        #message-input { width: 70%; padding: 5px; }
+        #lang-select { padding: 5px; margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Multilingual Chat</h1>
+    <label for="lang-select">Select your native language:</label>
+    <select id="lang-select" onchange="updateLanguage()">
+        <option value="en">English</option>
+        <option value="ru">Русский</option>
+        <option value="es">Español</option>
+        <option value="fr">Français</option>
+        <option value="de">Deutsch</option>
+        <option value="zh">中文 (Chinese)</option>
+        <option value="ja">日本語 (Japanese)</option>
+    </select>
+    <div id="chat-box"></div>
+    <input type="text" id="message-input" placeholder="Type your message..." onkeydown="if(event.key === 'Enter') sendMessage()">
+    <button onclick="sendMessage()">Send</button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.js"></script>
+    <script>
+        // Динамически определяем адрес сервера
+        const socket = io(window.location.protocol + '//' + window.location.host);
+        let userId = Math.random().toString(36).substring(2);
+        let nativeLang = 'en';
+
+        socket.on('connect', () => console.log('Connected to WebSocket at ' + window.location.host));
+        socket.on('message_broadcast', () => {
+            console.log('New message received');
+            refreshChat();
+        });
+
+        function updateLanguage() {
+            nativeLang = document.getElementById('lang-select').value;
+            socket.emit('set_language', { user_id: userId, language: nativeLang });
+            refreshChat();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            if (message) {
+                console.log('Sending message:', message);
+                socket.emit('chat_message', { user_id: userId, message: message });
+                input.value = '';
+                refreshChat();
+            }
+        }
+
+        function refreshChat() {
+            console.log('Refreshing chat for', userId, 'with lang', nativeLang);
+            fetch(`/get_messages?user_id=${userId}&lang=${nativeLang}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(messages => {
+                    console.log('Messages received:', messages);
+                    const chatBox = document.getElementById('chat-box');
+                    chatBox.innerHTML = '';
+                    messages.forEach(msg => {
+                        const p = document.createElement('p');
+                        p.textContent = `${msg.user_id}: ${msg.message}`;
+                        chatBox.appendChild(p);
+                    });
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                })
+                .catch(error => console.error('Error refreshing chat:', error));
+        }
+
+        socket.emit('join', { user_id: userId });
+        updateLanguage();
+    </script>
+</body>
+</html>
