@@ -22,6 +22,10 @@
         <option value="de">Deutsch</option>
         <option value="zh">中文 (Chinese)</option>
         <option value="ja">日本語 (Japanese)</option>
+        <option value="it">Italiano</option>
+        <option value="pt">Português</option> <!-- Добавлен португальский -->
+        <option value="sv">Svenska</option>   <!-- Добавлен шведский -->
+        <option value="ar">العربية</option>   <!-- Добавлен арабский -->
     </select>
     <div id="chat-box"></div>
     <input type="text" id="message-input" placeholder="Type your message..." onkeydown="if(event.key === 'Enter') sendMessage()">
@@ -29,7 +33,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.js"></script>
     <script>
-        // Динамически определяем адрес сервера
         const socket = io(window.location.protocol + '//' + window.location.host);
         let userId = Math.random().toString(36).substring(2);
         let nativeLang = 'en';
